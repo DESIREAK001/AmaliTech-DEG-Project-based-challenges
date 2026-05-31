@@ -1,0 +1,5 @@
+{
+  "id": "solar-array-1",
+  "timeout": 10,
+  "alert_email": "admin@critmon.com"
+}
