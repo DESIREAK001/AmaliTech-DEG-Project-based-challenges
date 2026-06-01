@@ -1,3 +1,15 @@
+# Pulse-Check-API ("Watchdog" Sentinel)
+
+## 1. Project Overview
+The Pulse-Check API is a "Dead Man's Switch" backend service built for CritMon Servers Inc. It actively monitors remote infrastructure (like solar farms and weather stations) in low-connectivity areas. Devices register a countdown timer and send periodic heartbeats to stay alive. If a device fails to check in before its timer hits zero, a background Watcher Thread automatically fires a critical alert so maintenance teams can be deployed.
+
+---
+
+## 2. Architecture Diagram
+
+The following sequence diagram outlines the asynchronous architecture, showing how the background Watcher Thread operates independently from the main Flask API to trigger alerts when timers expire.
+
+```mermaid
 sequenceDiagram
     autonumber
     actor Client
