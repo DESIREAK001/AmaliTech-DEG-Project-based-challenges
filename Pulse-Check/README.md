@@ -45,67 +45,6 @@ sequenceDiagram
     API->>Store: Update {status: PAUSED}
     API-->>Client: 200 OK
 ```
-
-sequenceDiagram
-    autonumber
-    actor Device as Remote Device
-    participant API as Flask API Layer
-    participant Lock as Thread Lock
-    participant Store as In-Memory Store
-    participant Disk as state.json File
-    participant Watcher as Background Watcher
-
-    box rgb(240, 240, 240) Background Monitoring
-    participant Watcher
-    participant Lock
-    participant Store
-    participant Disk
-    end
-
-    box rgb(255, 255, 255) API Interaction
-    participant Device
-    participant API
-    end
-
-    %% WATCHER LOOP
-    loop Every 1 Second
-        Watcher->>Lock: Acquire Lock (block endpoints)
-        
-        alt ACTIVE Monitors exist
-            Watcher->>Store: Scan monitors for timeouts
-            
-            note right of Watcher: Condition: currentTime > expirationTime
-            alt Device timed out
-                Watcher->>Watcher: 🚨 LOG CRITICAL ALERT to Console
-                Watcher->>Store: Set Status to DOWN
-                Watcher->>Disk: Overwrite state.json (Persist DOWN state)
-            else Device is safe
-                Watcher->>Watcher: Do Nothing
-            end
-        end
-        
-        Watcher->>Lock: Release Lock
-    end
-
-    %% ENDPOINT: CREATE
-    note over Device,API: POST /monitors {id, timeout, email}
-    Device->>API: Send Registration Request
-    API->>API: Compute expirationTime (currentTime + timeout)
-    API->>Lock: Acquire Lock (block Watcher)
-    API->>Store: Save monitor (status: ACTIVE)
-    API->>Disk: Overwrite state.json (Persist ACTIVE state)
-    API->>Lock: Release Lock
-    API-->>Device: HTTP 201 Created
-
-    %% ENDPOINT: HEARTBEAT
-    note over Device,API: POST /monitors/{id}/heartbeat
-    Device->>API: Send Check-in Request
-    API->>Lock: Acquire Lock (block Watcher)
-    API->>Store: Recalculate expirationTime & set status ACTIVE
-    API->>Disk: Overwrite state.json (Persist Reset state)
-    API->>Lock: Release Lock
-    API-->>Device: HTTP 200 OK
-
 ## 3. API Documentation
 
 ### **Endpoints**
